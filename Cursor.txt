@@ -1,0 +1,62 @@
+ CREATE PROCEDURE compareTables(IN p_emp_id INT)
+    -> BEGIN
+    ->     DECLARE v_empID INT;
+    ->     DECLARE v_name VARCHAR(100);
+    ->     DECLARE v_Epos VARCHAR(200); -- Declare variable for E_position
+    ->     DECLARE v_salary INT;
+    ->     DECLARE v_check INT;
+    ->     DECLARE exit_loop INT DEFAULT 0;
+    -> 
+    ->     -- Declare a parameterized cursor for fetching records from Old_emp
+    ->     DECLARE cur CURSOR FOR 
+    ->         SELECT Emp_id, E_name, E_position, E_salary FROM Old_emp WHERE Emp_id = p_emp_id; 
+    -> 
+    ->     -- Handler for when no more rows are available to fetch
+    ->     DECLARE CONTINUE HANDLER FOR NOT FOUND SET exit_loop = 1;
+    -> 
+    ->     -- Open the cursor
+    ->     OPEN cur;
+    -> 
+    ->     simple_loop: LOOP
+    ->         FETCH cur INTO v_empID, v_name, v_Epos, v_salary; -- Fetch the values
+    -> 
+    ->         -- Check if no more rows are available after fetch
+    ->         IF exit_loop = 1 THEN
+    ->             LEAVE simple_loop; -- Exit the loop without closing the cursor
+    ->         END IF;
+    -> 
+    ->         -- Check if the employee ID already exists in New_emp
+    ->         SELECT COUNT(Emp_id) INTO v_check FROM New_emp WHERE Emp_id = v_empID;
+    -> 
+    ->         -- If the entry does not exist, insert the new record
+    ->         IF v_check = 0 THEN
+    ->             INSERT INTO New_emp (Emp_id, E_name, E_position, E_salary) 
+    ->             VALUES (v_empID, v_name, v_Epos, v_salary); -- Include v_Epos in the insert
+    ->             -- Output a message indicating success
+    ->             SELECT CONCAT('Inserted: Emp_id ', v_empID, ' - ', v_name) AS Message;
+    ->         ELSE
+    ->             -- If the entry already exists, notify that as well
+    ->             SELECT CONCAT('Entry already exists for Emp_id ', v_empID) AS Message;
+    ->         END IF;
+    ->     END LOOP simple_loop;
+    -> 
+    ->     -- Close the cursor after processing all records
+    ->     CLOSE cur;
+    -> END//
+Query OK, 0 rows affected (0.008 sec)
+
+
+
+
+
+
+
+
+
+
+
+CREATE PROCEDURE status(IN in_emp INT) DECLARE e_id INT; DECLARE v_check INT; DECLARE e_salary VARCHAR(100); DECLARE e_name VARCHAR(100); DECLARE e_pos VARCHAR(100); DECLARE exit_loop INT DEFAULT 0;         
+ DECLARE cur CURSOR FOR SELECT empid,empname,epos,esalary from old where empid = in_emp; DECLARE CONTINUE HANDLER FOR NOT FOUND SET exit_loop = 1; OPEN cur; simple_loop: LOOP FETCH cur INTO empid,empname,epos,esalary;
+IF exit_loop = 1 THEN LEAVE simple_loop; END IF; SELECT COUNT(in_emp) INTO v_check FROM new WHERE empid = in_emp; IF v_check = 0 THEN INSERT INTO new values(NULL,in_emp,e_name,e_pos,e_salary); SELECT CONCAT('Employee added successfully') AS MESSAGE; ELSE SELECT CONCAT('Employee already present') AS MESSAGE; END IF; END LOOP simple_loop; CLOSE cur; END;//
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'DECLARE e_id INT; DECLARE v_check INT; DECLARE e_salary VARCHAR(100); DECLARE...' at line 1
+MariaDB [practice]>

@@ -1,0 +1,95 @@
+
+
+----------------------------------------------------------------
+
+DELIMITER //
+CREATE PROCEDURE Result(IN in_roll VARCHAR(100), OUT o_class VARCHAR(100))
+    -> BEGIN
+    ->     DECLARE c VARCHAR(100);
+    ->     DECLARE n VARCHAR(100);
+    ->     DECLARE m INT;
+    -> 
+    ->     -- Check if the result is already calculated for this roll number
+    ->     IF EXISTS(SELECT 1 FROM Result WHERE Roll_no = in_roll) THEN
+    ->         SIGNAL SQLSTATE '45000' 
+    ->         SET MESSAGE_TEXT = 'Result already calculated';
+    ->     END IF;
+    -> 
+    ->     -- Fetch name and total marks for the given roll number
+    ->     SELECT name, total_marks INTO n, m 
+    ->     FROM Stud_marks 
+    ->     WHERE Roll_no = in_roll;
+    -> 
+    ->     -- Check if marks are available
+    ->     IF m IS NULL THEN
+    ->         SIGNAL SQLSTATE '45000' 
+    ->         SET MESSAGE_TEXT = 'Student marks not available';
+    ->     END IF;
+    -> 
+    ->     -- Determine the classification based on marks
+    ->     IF m >= 990 AND m <= 1500 THEN
+    ->         SET c = 'Distinction';
+    ->     ELSEIF m >= 900 AND m < 990 THEN
+    ->         SET c = 'First class';
+    ->     ELSEIF m >= 825 AND m < 900 THEN
+    ->         SET c = 'Pass';
+    ->     ELSE
+    ->         SET c = 'Fail';
+    ->     END IF;
+    -> 
+    ->     -- Insert the result with the correct column name for classification
+    ->     INSERT INTO Result (Roll_no, name, class) VALUES (in_roll, n, c);
+    ->     SET o_class = c;
+    -> END //
+    
+     DELIMITER ;
+
+-----------------------------------------------------------
+
+
+
+
+
+------------------------------------------------------------------------
+
+ CREATE FUNCTION getGrade(roll_no INT) 
+    -> RETURNS VARCHAR(100) 
+    -> DETERMINISTIC 
+    -> BEGIN 
+    ->     DECLARE m INT;           -- Variable to store the total marks
+    ->     DECLARE c VARCHAR(100);  -- Variable to store the grade
+    -> 
+    ->     -- Fetch total_marks for the given roll number
+    ->     SELECT total_marks INTO m 
+    ->     FROM Stud_marks 
+    ->     WHERE Roll_no = roll_no 
+    ->     LIMIT 1;  -- Ensure only one row is selected
+    -> 
+    ->     -- Check if marks were found
+    ->     IF m IS NULL THEN
+    ->         RETURN 'Student marks not available';  -- Return a message if no marks are found
+    ->     END IF;
+    -> 
+    ->     -- Determine the class based on marks
+    ->     IF m >= 990 AND m <= 1500 THEN 
+    ->         SET c = 'Distinction'; 
+    ->     ELSEIF m >= 900 AND m < 990 THEN 
+    ->         SET c = 'First class'; 
+    ->     ELSEIF m >= 825 AND m < 900 THEN 
+    ->         SET c = 'Second class';  
+    ->     ELSEIF m >= 600 AND m < 825 THEN 
+    ->         SET c = 'Pass'; 
+    ->     ELSE 
+    ->         SET c = 'Fail'; 
+    ->     END IF;
+    -> 
+    ->     -- Return the grade
+    ->     RETURN c; 
+    -> END //
+
+
+
+
+
+
+
