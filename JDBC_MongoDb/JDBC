@@ -1,0 +1,107 @@
+
+
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Updates;
+import org.bson.Document;
+
+import java.util.Scanner;
+import java.util.UUID;
+
+public class main3 {
+    public static void main(String[] args) {
+     System.out.println("Starting connection");
+        MongoClient client = MongoClients.create("mongodb://localhost:27017");
+        MongoDatabase db = client.getDatabase("assignment_12");
+        MongoCollection<Document> collection = db.getCollection("blogs");
+
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Connection established successfully..........\n");
+
+        while (true) {
+            System.out.println("1. Insert blog");
+            System.out.println("2. Get all blogs");
+            System.out.println("3. Update blog");
+            System.out.println("4. Delete blog");
+            System.out.println("5. Exit");
+            System.out.print("Choose an option: ");
+
+            int option = scanner.nextInt();
+            scanner.nextLine(); // Consume newline character
+
+            try {
+                switch (option) {
+                    case 1: // Insert blog
+                        System.out.print("Enter title: ");
+                        String title = scanner.nextLine();
+                        System.out.print("Enter content: ");
+                        String content = scanner.nextLine();
+
+                        Document newDoc = new Document()
+                                .append("_id", UUID.randomUUID().toString())
+                                .append("title", title)
+                                .append("content", content);
+
+                        collection.insertOne(newDoc);
+                        System.out.println("Blog inserted successfully.");
+                        break;
+
+                    case 2: // Get all blogs
+                        MongoCursor<Document> docs = collection.find().iterator();
+                        while (docs.hasNext()) {
+                            Document blog = docs.next();
+                            String id = blog.getString("_id");
+                            String blogTitle = blog.getString("title");
+                            String blogContent = blog.getString("content");
+                            System.out.println("ID: " + id);
+                            System.out.println("Title: " + blogTitle);
+                            System.out.println("Content: " + blogContent);
+                            System.out.println("---------------------------------");
+                        }
+                        break;
+
+                    case 3: // Update blog
+                        System.out.print("Enter ID of the blog to update: ");
+                        String idToUpdate = scanner.nextLine();
+                        System.out.print("Enter new title: ");
+                        String newTitle = scanner.nextLine();
+                        System.out.print("Enter new content: ");
+                        String newContent = scanner.nextLine();
+
+                        collection.updateOne(
+                                Filters.eq("_id", idToUpdate),
+                                Updates.combine(
+                                        Updates.set("title", newTitle),
+                                        Updates.set("content", newContent)
+                                )
+                        );
+                        System.out.println("Blog updated successfully.");
+                        break;
+
+                    case 4: // Delete blog
+                        System.out.print("Enter ID of the blog to delete: ");
+                        String idToDelete = scanner.nextLine();
+                        collection.deleteOne(Filters.eq("_id", idToDelete));
+                        System.out.println("Blog deleted successfully.");
+                        break;
+
+                    case 5: // Exit
+                        System.out.println("Exiting application...");
+                        client.close();
+                        scanner.close();
+                        return;
+
+                    default:
+                        System.out.println("Invalid option. Please try again.");
+                }
+            } catch (Exception e) {
+                System.out.println("An error occurred: " + e.getMessage());
+            }
+        }
+    }
+}
+
